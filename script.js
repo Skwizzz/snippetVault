@@ -181,16 +181,20 @@ function render() {
 
         // STATS
         const stats = document.createElement("div");
-        stats.className = "snippet-stats";
+stats.className = "snippet-stats";
 
-        const created = s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "-";
-        const updated = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString() : "-";
+const created = new Date(s.createdAt).toLocaleDateString();
+const updated = new Date(s.updatedAt).toLocaleDateString();
 
-        stats.innerHTML = `
-            <span>📅 ${created}</span>
-            <span>✏️ ${updated}</span>
-            <span>📋 ${s.copies || 0} copies</span>
-        `;
+stats.innerHTML = `
+<span>📅 ${created}</span>
+<span>✏️ ${updated}</span>
+<span>📋 ${s.copies || 0} copies</span>
+`;
+
+div.appendChild(stats);
+
+div.innerHTML = ` ... `
 
         // CODE BLOCK
         const pre = document.createElement("pre");
