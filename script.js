@@ -2,13 +2,33 @@ let snippets = [];
 let favoritesOnly = false;
 let activeTag = null;
 
+const quotes = [
+    "Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.",
+    "All computers wait at the same speed.",
+    "A misplaced decimal point will always end up where it will do the greatest damage.",
+    "A computer program does what you tell it to do, not what you want it to do.",
+    "Beta is Latin for still doesn’t work.",
+    "It works on my machine."
+];
 
+function setDailyQuote() {
+    const quoteBox = document.getElementById("quoteBox");
+
+    if (!quoteBox) return;
+
+    // quote stable du jour
+    const dayIndex = new Date().getDate() % quotes.length;
+    const quote = quotes[dayIndex];
+
+    quoteBox.innerText = `💡 ${quote}`;
+}
 document.addEventListener("DOMContentLoaded", () => {
     snippets = JSON.parse(localStorage.getItem("snippets")) || [];
-
+    setDailyQuote();
     snippets = snippets.map(s => ({
         ...s,
         favorite: s.favorite ?? false
+        
     }));
 
     render();
