@@ -227,3 +227,114 @@ h1 {
         transform: translateY(0);
     }
 }
+.file-btn {
+    display: block;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+
+    background: var(--button);
+    color: white;
+    text-align: center;
+}   
+.snippet-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.snippet-actions button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+
+    background: var(--button);
+    color: var(--text);
+
+    transition: 0.2s;
+}
+
+.snippet-actions button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+.run-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.run-modal iframe {
+    flex: 1;
+    background: white;
+}
+
+.close-run {
+    padding: 10px;
+    background: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+select#tag {
+    width: 100%;
+    padding: 12px 14px;
+
+    border-radius: 12px;
+    border: none;
+
+    background: var(--input);
+    color: var(--text);
+
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+    outline: none;
+
+    appearance: none;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: 0.2s ease;
+}
+
+select#tag:hover {
+    transform: translateY(-2px);
+}
+
+select#tag:focus {
+    box-shadow: 0 0 0 2px rgba(34,197,94,0.4);
+}
+.tag-wrapper {
+    display: inline-block;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+/* JS */
+.tag-wrapper.js {
+    box-shadow: 0 0 15px rgba(247, 223, 30, 0.4);
+}
+
+/* CSS */
+.tag-wrapper.css {
+    box-shadow: 0 0 15px rgba(86, 156, 214, 0.4);
+}
+
+/* HTML */
+.tag-wrapper.html {
+    box-shadow: 0 0 15px rgba(227, 79, 38, 0.4);
+}
+
+/* Python */
+.tag-wrapper.python {
+    box-shadow: 0 0 15px rgba(53, 114, 165, 0.4);
+}
+.tag-wrapper {
+    width: 100%;
+}
