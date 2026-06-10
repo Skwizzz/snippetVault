@@ -1,58 +1,172 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Code Snippet Vault</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
-</head>
+let snippets = [];
+let favoritesOnly = false;
+let activeTag = null;
 
-<body>
-    <div id="loader" class="loader">
-    <div class="spinner"></div>
-    <p>Restoring snippets...</p>
-    </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-<div class="sidebar" id="sidebar">
 
-    <h2>🧰 Toolbox</h2>
+document.addEventListener("DOMContentLoaded", () => {
+    snippets = JSON.parse(localStorage.getItem("snippets")) || [];
 
-    <button onclick="showAll()">📄 All Snippets</button>
-    <button onclick="toggleFavoritesOnly()">⭐ Favorites Only</button>
-    <button onclick="filterTag('js')">⚡ JavaScript</button>
-    <button onclick="filterTag('css')">🎨 CSS</button>
-    <button onclick="filterTag('html')">🌐 HTML</button>
-    <hr>
+    snippets = snippets.map(s => ({
+        ...s,
+        favorite: s.favorite ?? false
+    }));
 
-    <button class="danger" onclick="clearAllSnippets()">
-        🗑️ Delete All
-    </button>
-    <hr>
+    render();
 
-    <button onclick="toggleTheme()">🌗 Theme</button>
+    setTimeout(() => {
+        const loader = document.getElementById("loader");
+        if (loader) loader.style.display = "none";
+    }, 400);
+});
 
-</div>
-<div class="container">
-    <input id="search" placeholder="Search snippets..." oninput="render()">
-    <h1>💾 Code Snippet Vault</h1>
-    
-    <div class="form">
-        
-        <input id="title" placeholder="Title (ex: Fetch API)">
-        <input id="tag" placeholder="Tag (JS, CSS...)">
 
-        <textarea id="code" placeholder="Write your code..."></textarea>
+function addSnippet() {
+    const title = document.getElementById("title").value.trim();
+    const tag = document.getElementById("tag").value.trim();
+    const code = document.getElementById("code").value;
 
-        <button onclick="addSnippet()">Add Snippet</button>
+    if (!title || !code) return;
 
-    </div>
+    const snippet = {
+        id: Date.now(),
+        title,
+        tag,
+        code,
+        favorite: false
+    };
 
-    <div id="snippets"></div>
+    snippets.push(snippet);
+    save();
+    render();
 
-</div>
+    document.getElementById("title").value = "";
+    document.getElementById("tag").value = "";
+    document.getElementById("code").value = "";
+}
 
-<script src="script.js"></script>
+function deleteSnippet(id) {
+    snippets = snippets.filter(s => s.id !== id);
+    save();
+    render();
+}
 
-</body>
-</html>
+
+function copyCode(code) {
+    navigator.clipboard.writeText(code);
+}
+
+function save() {
+    localStorage.setItem("snippets", JSON.stringify(snippets));
+}
+
+
+function render() {
+    const container = document.getElementById("snippets");
+    const search = document.getElementById("search")?.value.toLowerCase() || "";
+
+    container.innerHTML = "";
+
+    const filtered = snippets
+        .sort((a, b) => b.favorite - a.favorite)
+        .filter(s => {
+
+            const matchSearch =
+                s.title.toLowerCase().includes(search) ||
+                (s.tag || "").toLowerCase().includes(search);
+
+            const matchFav = favoritesOnly ? s.favorite : true;
+            const matchTag = activeTag ? s.tag === activeTag : true;
+
+            return matchSearch && matchFav && matchTag;
+        });
+
+    filtered.forEach(s => {
+
+        const div = document.createElement("div");
+        div.className = "snippet";
+        div.dataset.id = s.id;
+
+        div.innerHTML = `
+            <h3>
+                ${s.title}
+                <button onclick="toggleFavorite(${s.id})">
+                    ${s.favorite ? "⭐" : "☆"}
+                </button>
+            </h3>
+
+            <div class="tag" onclick="filterTag('${s.tag}')">
+                #${s.tag || "no-tag"}
+            </div>
+        `;
+
+        const pre = document.createElement("pre");
+        const code = document.createElement("code");
+
+        code.className = "language-javascript";
+        code.textContent = s.code; // 🔥 SAFE IMPORTANT
+
+        pre.appendChild(code);
+        div.appendChild(pre);
+
+        const copyBtn = document.createElement("button");
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = () => copyCode(s.code);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.onclick = () => deleteSnippet(s.id);
+
+        div.appendChild(copyBtn);
+        div.appendChild(delBtn);
+
+        container.appendChild(div);
+    });
+
+    Prism.highlightAll();
+}
+
+
+function toggleFavorite(id) {
+    snippets = snippets.map(s =>
+        s.id === id ? { ...s, favorite: !s.favorite } : s
+    );
+
+    save();
+    render();
+}
+
+function toggleFavoritesOnly() {
+    favoritesOnly = !favoritesOnly;
+    render();
+}
+
+
+function filterTag(tag) {
+    activeTag = tag;
+    render();
+}
+
+function showAll() {
+    activeTag = null;
+    favoritesOnly = false;
+    render();
+}
+
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+
+    localStorage.setItem(
+        "theme",
+        document.body.classList.contains("light") ? "light" : "dark"
+    );
+}
+
+
+function clearAllSnippets() {
+    if (!confirm("⚠️ Delete ALL snippets?")) return;
+
+    snippets = [];
+    save();
+    render();
+}
