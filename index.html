@@ -14,6 +14,7 @@
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 <div class="sidebar" id="sidebar">
     <div id="quoteBox" class="quote-box"></div>
     <h2>🧰 Toolbox</h2>
@@ -31,7 +32,21 @@
     <hr>
 
     <button onclick="toggleTheme()">🌗 Theme</button>
+    <button onclick="exportSnippets()">
+    💾 Export JSON ( BACKUP )
+    </button>
+    <label for="importFile" class="file-btn">
+    📥 Import JSON
+</label>
 
+<input
+    type="file"
+    id="importFile"
+    accept=".json"
+    onchange="importSnippets(event)"
+    hidden
+>
+<button onclick="goAbout()">ℹ️ About</button>
 </div>
 <div class="container">
     <input id="search" placeholder="Search snippets..." oninput="render()">
@@ -40,7 +55,15 @@
     <div class="form">
         
         <input id="title" placeholder="Title (ex: Fetch API)">
-        <input id="tag" placeholder="Tag (JS, CSS...)">
+        <div class="tag-wrapper js">
+        <select id="tag" onchange="updateTagStyle(this)">
+        <option value="">Select a tag</option>
+        <option value="js">JavaScript</option>
+        <option value="css">CSS</option>
+        <option value="html">HTML</option>
+        <option value="python">Python</option>
+        </select>
+        </div>
 
         <textarea id="code" placeholder="Write your code..."></textarea>
 
