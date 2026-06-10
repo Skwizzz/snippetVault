@@ -1,7 +1,7 @@
 const updates = [
     {
         version: "v1.3",
-        text: "Added Runner ( Still WIP ) Added tag selection"
+        text: "Added tag selection"
     },
     {
         version: "v1.2",
