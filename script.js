@@ -1,20 +1,38 @@
-let snippets = JSON.parse(localStorage.getItem("snippets")) || [];
+let snippets = [];
 let favoritesOnly = false;
+let activeTag = null;
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    snippets = JSON.parse(localStorage.getItem("snippets")) || [];
+
+    snippets = snippets.map(s => ({
+        ...s,
+        favorite: s.favorite ?? false
+    }));
+
+    render();
+
+    setTimeout(() => {
+        const loader = document.getElementById("loader");
+        if (loader) loader.style.display = "none";
+    }, 400);
+});
 
 
 function addSnippet() {
-    const title = document.getElementById("title").value;
-    const tag = document.getElementById("tag").value;
+    const title = document.getElementById("title").value.trim();
+    const tag = document.getElementById("tag").value.trim();
     const code = document.getElementById("code").value;
 
     if (!title || !code) return;
 
     const snippet = {
-    id: Date.now(),
-    title,
-    tag,
-    code,
-    favorite: false
+        id: Date.now(),
+        title,
+        tag,
+        code,
+        favorite: false
     };
 
     snippets.push(snippet);
@@ -32,14 +50,15 @@ function deleteSnippet(id) {
     render();
 }
 
+
 function copyCode(code) {
     navigator.clipboard.writeText(code);
-    alert("Copied!");
 }
 
 function save() {
     localStorage.setItem("snippets", JSON.stringify(snippets));
 }
+
 
 function render() {
     const container = document.getElementById("snippets");
@@ -47,7 +66,7 @@ function render() {
 
     container.innerHTML = "";
 
-    snippets
+    const filtered = snippets
         .sort((a, b) => b.favorite - a.favorite)
         .filter(s => {
 
@@ -55,115 +74,97 @@ function render() {
                 s.title.toLowerCase().includes(search) ||
                 (s.tag || "").toLowerCase().includes(search);
 
-            const isFavorite = s.favorite === true;
+            const matchFav = favoritesOnly ? s.favorite : true;
+            const matchTag = activeTag ? s.tag === activeTag : true;
 
-            const matchFav = favoritesOnly ? isFavorite : true;
-
-            return matchSearch && matchFav;
-        })
-        .forEach(s => {
-
-            const star = s.favorite ? "⭐" : "☆";
-
-            container.innerHTML += `
-                <div class="snippet">
-                    <h3>
-                        ${s.title}
-                        <button onclick="toggleFavorite(${s.id})">
-                            ${star}
-                        </button>
-                    </h3>
-
-                    <div class="tag">#${s.tag || "no-tag"}</div>
-
-                    <pre><code class="language-javascript">${escapeHtml(s.code)}</code></pre>
-
-                    <button onclick="copyCode(\`${s.code}\`)">Copy</button>
-                    <button onclick="deleteSnippet(${s.id})">Delete</button>
-                </div>
-            `;
+            return matchSearch && matchFav && matchTag;
         });
+
+    filtered.forEach(s => {
+
+        const div = document.createElement("div");
+        div.className = "snippet";
+        div.dataset.id = s.id;
+
+        div.innerHTML = `
+            <h3>
+                ${s.title}
+                <button onclick="toggleFavorite(${s.id})">
+                    ${s.favorite ? "⭐" : "☆"}
+                </button>
+            </h3>
+
+            <div class="tag" onclick="filterTag('${s.tag}')">
+                #${s.tag || "no-tag"}
+            </div>
+        `;
+
+        const pre = document.createElement("pre");
+        const code = document.createElement("code");
+
+        code.className = "language-javascript";
+        code.textContent = s.code; // 🔥 SAFE IMPORTANT
+
+        pre.appendChild(code);
+        div.appendChild(pre);
+
+        const copyBtn = document.createElement("button");
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = () => copyCode(s.code);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.onclick = () => deleteSnippet(s.id);
+
+        div.appendChild(copyBtn);
+        div.appendChild(delBtn);
+
+        container.appendChild(div);
+    });
 
     Prism.highlightAll();
 }
 
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-function toggleTheme() {
-    document.body.classList.toggle("light");
 
-    // save preference
-    if (document.body.classList.contains("light")) {
-        localStorage.setItem("theme", "light");
-    } else {
-        localStorage.setItem("theme", "dark");
-    }
-}
-
-// load saved theme
-window.onload = () => {
-    if (localStorage.getItem("theme") === "light") {
-        document.body.classList.add("light");
-    }
-};
-function filterTag(tag) {
-    const items = document.querySelectorAll(".snippet");
-
-    items.forEach(el => {
-        if (el.innerText.toLowerCase().includes(tag)) {
-            el.style.display = "block";
-        } else {
-            el.style.display = "none";
-        }
-    });
-}
-
-function showAll() {
-    document.querySelectorAll(".snippet").forEach(el => {
-        el.style.display = "block";
-    });
-}
 function toggleFavorite(id) {
-    snippets = snippets.map(s => {
-        if (s.id === id) {
-            return { ...s, favorite: !s.favorite };
-        }
-        return s;
-    });
+    snippets = snippets.map(s =>
+        s.id === id ? { ...s, favorite: !s.favorite } : s
+    );
 
     save();
     render();
 }
+
 function toggleFavoritesOnly() {
     favoritesOnly = !favoritesOnly;
     render();
 }
-window.addEventListener("DOMContentLoaded", () => {
+
+
+function filterTag(tag) {
+    activeTag = tag;
     render();
-});
-document.addEventListener("DOMContentLoaded", () => {
-    snippets = JSON.parse(localStorage.getItem("snippets")) || [];
+}
 
-    snippets = snippets.map(s => ({
-        ...s,
-        favorite: s.favorite ?? false
-    }));
-
+function showAll() {
+    activeTag = null;
+    favoritesOnly = false;
     render();
+}
 
-    // simulate loading delay (UI feel)
-    setTimeout(() => {
-        document.getElementById("loader").style.display = "none";
-    }, 400);
-});
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+
+    localStorage.setItem(
+        "theme",
+        document.body.classList.contains("light") ? "light" : "dark"
+    );
+}
+
+
 function clearAllSnippets() {
-    const confirmDelete = confirm("⚠️ Delete ALL snippets? This cannot be undone.");
-
-    if (!confirmDelete) return;
+    if (!confirm("⚠️ Delete ALL snippets?")) return;
 
     snippets = [];
     save();
