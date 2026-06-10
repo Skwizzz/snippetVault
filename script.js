@@ -63,6 +63,13 @@ function addSnippet() {
                 tag,
                 code
             };
+        return {
+        ...s,
+        title,
+        tag,
+        code,
+        updatedAt: Date.now()
+        };
         }
 
         return s;
@@ -87,11 +94,16 @@ function addSnippet() {
     if (!title || !code) return;
 
     const snippet = {
-        id: Date.now(),
-        title,
-        tag,
-        code,
-        favorite: false
+    id: Date.now(),
+    title,
+    tag,
+    code,
+    favorite: false,
+
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    copies: 0,
+    
     };
 
     snippets.push(snippet);
@@ -110,8 +122,17 @@ function deleteSnippet(id) {
 }
 
 
-function copyCode(code) {
+function copyCode(code, id) {
     navigator.clipboard.writeText(code);
+
+    snippets = snippets.map(s =>
+        s.id === id
+            ? { ...s, copies: (s.copies || 0) + 1 }
+            : s
+    );
+
+    save();
+    render();
 }
 
 function save() {
@@ -128,7 +149,6 @@ function render() {
     const filtered = snippets
         .sort((a, b) => b.favorite - a.favorite)
         .filter(s => {
-
             const matchSearch =
                 s.title.toLowerCase().includes(search) ||
                 (s.tag || "").toLowerCase().includes(search);
@@ -143,33 +163,49 @@ function render() {
 
         const div = document.createElement("div");
         div.className = "snippet";
-        div.dataset.id = s.id;
 
-        div.innerHTML = `
-            <h3>
-                ${s.title}
-                <button onclick="toggleFavorite(${s.id})">
-                    ${s.favorite ? "⭐" : "FAVORITE"}
-                </button>
-            </h3>
-
-            <div class="tag" onclick="filterTag('${s.tag}')">
-                #${s.tag || "no-tag"}
-            </div>
+        // HEADER
+        const header = document.createElement("h3");
+        header.innerHTML = `
+            ${s.title}
+            <button onclick="toggleFavorite(${s.id})">
+                ${s.favorite ? "⭐" : "FAVORITE"}
+            </button>
         `;
 
+        // TAG
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.textContent = `#${s.tag || "no-tag"}`;
+        tag.onclick = () => filterTag(s.tag);
+
+        // STATS
+        const stats = document.createElement("div");
+        stats.className = "snippet-stats";
+
+        const created = s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "-";
+        const updated = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString() : "-";
+
+        stats.innerHTML = `
+            <span>📅 ${created}</span>
+            <span>✏️ ${updated}</span>
+            <span>📋 ${s.copies || 0} copies</span>
+        `;
+
+        // CODE BLOCK
         const pre = document.createElement("pre");
         const code = document.createElement("code");
-
         code.className = "language-javascript";
-        code.textContent = s.code; 
-
+        code.textContent = s.code;
         pre.appendChild(code);
-        div.appendChild(pre);
+
+        // ACTIONS
+        const actions = document.createElement("div");
+        actions.className = "snippet-actions";
 
         const copyBtn = document.createElement("button");
         copyBtn.textContent = "Copy";
-        copyBtn.onclick = () => copyCode(s.code);
+        copyBtn.onclick = () => copyCode(s.code, s.id);
 
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
@@ -178,20 +214,14 @@ function render() {
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.onclick = () => deleteSnippet(s.id);
-        const btns = document.createElement("div");
-        btns.className = "snippet-actions";
-        const runBtn = document.createElement("button");
-    runBtn.textContent = "▶ Run";
-    runBtn.onclick = () => runSnippet(s.code, s.tag);
 
-    btns.appendChild(copyBtn);
-    btns.appendChild(editBtn);
-    btns.appendChild(delBtn);
-    btns.appendChild(runBtn);
+        
 
-    div.appendChild(btns);
-    
-    container.appendChild(div);
+        actions.append(copyBtn, editBtn, delBtn,);
+
+        // ASSEMBLY ORDER (IMPORTANT)
+        div.append(header, tag, stats, pre, actions);
+        container.appendChild(div);
     });
 
     Prism.highlightAll();
@@ -254,6 +284,7 @@ function editSnippet(id) {
     editingId = id;
 
     document.querySelector(".form button").innerText = "💾 Save Changes";
+    snippet.updatedAt = Date.now();
 }
 function importSnippets(event) {
 
@@ -306,97 +337,7 @@ function exportSnippets() {
 
     URL.revokeObjectURL(url);
 }
-function runSnippet(code, tag) {
 
-    // 🐍 PYTHON
-    if (tag === "python") {
-        runPython(code);
-        return;
-    }
-
-    const modal = document.createElement("div");
-    modal.className = "run-modal";
-
-    const iframe = document.createElement("iframe");
-
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    iframe.style.border = "none";
-
-    let content = "";
-
-    // HTML
-    if (tag === "html") {
-        content = code;
-    }
-
-    // CSS
-    else if (tag === "css") {
-        content = `
-            <style>${code}</style>
-            <div style="padding:20px">CSS Preview</div>
-        `;
-    }
-
-    // JS
-    else {
-        content = `
-            <html>
-            <body>
-            <script>
-                try {
-                    ${code}
-                } catch (e) {
-                    document.body.innerHTML = e;
-                }
-            <\/script>
-            </body>
-            </html>
-        `;
-    }
-
-    iframe.srcdoc = content;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "✖ Close";
-    closeBtn.className = "close-run";
-    closeBtn.onclick = () => modal.remove();
-
-    modal.appendChild(closeBtn);
-    modal.appendChild(iframe);
-
-    document.body.appendChild(modal);
-}
-async function runPython(code) {
-
-    if (!pyodide) {
-        alert("Python is still loading...");
-        return;
-    }
-
-    try {
-        let output = "";
-
-        pyodide.setStdout({
-            batched: (text) => {
-                output += text;
-            }
-        });
-
-        pyodide.setStderr({
-            batched: (text) => {
-                output += text;
-            }
-        });
-
-        await pyodide.runPythonAsync(code);
-
-        alert(output || "Done");
-
-    } catch (err) {
-        alert("Python error: " + err);
-    }
-}
 function goAbout() {
     window.location.href = "about.html";
 }
