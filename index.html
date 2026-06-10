@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Snippet Vault</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="loader" class="loader">
+    <div class="spinner"></div>
+    <p>Restoring snippets...</p>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<div class="sidebar" id="sidebar">
+
+    <h2>🧰 Toolbox</h2>
+
+    <button onclick="showAll()">📄 All Snippets</button>
+    <button onclick="toggleFavoritesOnly()">⭐ Favorites Only</button>
+    <button onclick="filterTag('js')">⚡ JavaScript</button>
+    <button onclick="filterTag('css')">🎨 CSS</button>
+    <button onclick="filterTag('html')">🌐 HTML</button>
+    <hr>
+
+    <button class="danger" onclick="clearAllSnippets()">
+        🗑️ Delete All
+    </button>
+    <hr>
+
+    <button onclick="toggleTheme()">🌗 Theme</button>
+
+</div>
+<div class="container">
+    <input id="search" placeholder="Search snippets..." oninput="render()">
+    <h1>💾 Code Snippet Vault</h1>
+    
+    <div class="form">
+        
+        <input id="title" placeholder="Title (ex: Fetch API)">
+        <input id="tag" placeholder="Tag (JS, CSS...)">
+
+        <textarea id="code" placeholder="Write your code..."></textarea>
+
+        <button onclick="addSnippet()">Add Snippet</button>
+
+    </div>
+
+    <div id="snippets"></div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
